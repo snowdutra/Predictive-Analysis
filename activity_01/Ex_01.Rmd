@@ -108,22 +108,22 @@ Nesta seção, comparamos os resultados dos modelos completo e stepwise para a v
 
 ## Tabela de Coeficientes do Modelo Completo
 ```{r}
-knitr::kable(summary(modelo_completo)$coefficients, caption = "Coeficientes do Modelo Completo")
+knitr::kable(summary(modelo_completo)$coefficients, caption = "Coeficientes do Modelo Completo") # nolint
 ```
 
 ## Tabela de VIF do Modelo Completo
 ```{r}
-knitr::kable(as.data.frame(vif(modelo_completo)), caption = "VIF do Modelo Completo")
+knitr::kable(as.data.frame(vif(modelo_completo)), caption = "VIF do Modelo Completo") # nolint
 ```
 
 ## Tabela de Coeficientes do Modelo Stepwise
 ```{r}
-knitr::kable(summary(modelo_stepwise)$coefficients, caption = "Coeficientes do Modelo Stepwise")
+knitr::kable(summary(modelo_stepwise)$coefficients, caption = "Coeficientes do Modelo Stepwise") # nolint
 ```
 
 ## Tabela de VIF do Modelo Stepwise
 ```{r}
-knitr::kable(as.data.frame(vif(modelo_stepwise)), caption = "VIF do Modelo Stepwise")
+knitr::kable(as.data.frame(vif(modelo_stepwise)), caption = "VIF do Modelo Stepwise") # nolint
 ```
 
 ## Gráfico de Resíduos do Modelo Stepwise
