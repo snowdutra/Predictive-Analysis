@@ -1,7 +1,8 @@
 ---
 title: "Análise de Acessibilidade Urbana com Dados UberX em São Paulo"
 output:
-  pdf_document: default
+  pdf_document:
+    latex_engine: xelatex
   html_document: default
 ---
 
@@ -19,7 +20,7 @@ Carregamos os pacotes necessários e a base de dados. O arquivo contém variáve
 library(stats)
 library(car)
 
-dados <- read.csv2("csv/uber_analise_20181003.csv")
+dados <- read.csv2("C:/Users/gustavo.telles/Desktop/Predictive-Analysis/csv/uber_analise_20181003.csv") # nolint
 ```
 
 2. Exploração Inicial dos Dados
