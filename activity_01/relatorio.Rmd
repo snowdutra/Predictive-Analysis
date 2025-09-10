@@ -1,0 +1,54 @@
+---
+title: "Análise de Acessibilidade Urbana com Dados UberX em São Paulo (Resumo)"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
+---
+
+# Introdução
+
+Este relatório resume a análise dos tempos de espera do UberX em São Paulo, replicando o artigo “Medindo a Acessibilidade: Uma Perspectiva de Big Data sobre os Tempos de Espera do Serviço da Uber”. Utilizamos regressão linear múltipla (RLM), VIF e seleção stepwise para identificar os principais fatores explicativos.
+
+---
+
+# Metodologia
+
+Os dados de transporte e socioeconômicos dos distritos de São Paulo foram analisados. O modelo inicial incluiu todas as variáveis disponíveis. Após diagnóstico de multicolinearidade (VIF), aplicou-se o stepwise para obter um modelo enxuto e comparável ao artigo.
+
+```{r}
+library(stats)
+library(car)
+dados <- read.csv2("C:/Users/gustavo.telles/Desktop/Predictive-Analysis/csv/uber_analise_20181003.csv") # nolint
+modelo_completo <- lm(media ~ QTLINBUS2018 + KMLINBUS2018 + QTPONTBUS2018 + QTESTMETRO2018 + RENDP2010 + ARE1 + POP2018 + DENPOP2018 + DOMP2018 + ESTAB2016 + EMP2016 + PNBRAN2010 + TEMP2010_5MIN + TEMP2010_30MIN + TEMP2010_60MIN + TEMP2010_120MIN + TEMP2010_121MIN + TEMP2010_0MIN + PDOMC2010 + PDOMM2010, data = dados) # nolint
+modelo_stepwise <- step(modelo_completo, direction = "both", trace = FALSE)
+```
+
+---
+
+# Resultados
+
+## Tabela de Coeficientes do Modelo Stepwise
+```{r}
+knitr::kable(summary(modelo_stepwise)$coefficients, caption = "Coeficientes do Modelo Stepwise") # nolint
+```
+
+## Tabela de VIF do Modelo Stepwise
+```{r}
+knitr::kable(as.data.frame(vif(modelo_stepwise)), caption = "VIF do Modelo Stepwise") # nolint
+```
+
+## Gráfico de Resíduos do Modelo Stepwise
+```{r}
+plot(modelo_stepwise, which = 1)
+```
+
+O modelo stepwise apresentou R² ajustado elevado (próximo de 0,88), com significância para comprimento de linhas de ônibus, área, densidade populacional, proporção de não brancos e tempo de viagem > 121min, em linha com o artigo original. Todos os VIFs ficaram abaixo de 5, indicando ausência de multicolinearidade preocupante.
+
+---
+
+# Conclusão e Discussão Crítica
+
+O modelo final é parcimonioso e robusto, explicando bem o tempo médio de espera pelo UberX em São Paulo. Os resultados reforçam que variáveis de transporte e demográficas são determinantes para a acessibilidade urbana. O alinhamento com o artigo valida a abordagem e sugere que o tempo de espera pode ser usado como proxy de acessibilidade, desde que acompanhado de análise criteriosa dos indicadores.
+
+**Limitações:** análise restrita à frota UberX e ao contexto de São Paulo em 2018. Recomenda-se replicar para outros contextos e incluir fatores espaciais para maior poder explicativo.
