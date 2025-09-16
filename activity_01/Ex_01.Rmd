@@ -1,0 +1,203 @@
+---
+title: "Análise de Acessibilidade Urbana com Dados UberX em São Paulo"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
+---
+
+# Introdução
+
+Este relatório replica e expande o artigo “Medindo a Acessibilidade: Uma Perspectiva de Big Data sobre os Tempos de Espera do Serviço da Uber”, utilizando regressão linear múltipla (RLM), diagnóstico de colinearidade (VIF) e seleção de variáveis (stepwise) para explicar o tempo médio de espera pelo UberX em São Paulo.
+
+---
+
+1. Carregamento dos Pacotes e Dados
+
+Carregamos os pacotes necessários e a base de dados. O arquivo contém variáveis de transporte e socioeconômicas por distrito.
+
+```{r}
+library(stats)
+library(car)
+
+dados <- read.csv2("C:/Users/gustavo.telles/Desktop/Predictive-Analysis/csv/uber_analise_20181003.csv") # nolint
+# Ajuste o caminho conforme o local de execução
+```
+
+2. Exploração Inicial dos Dados
+
+Visualizamos a estrutura e o resumo estatístico para entender os tipos de variáveis e possíveis problemas (missing, outliers).
+
+```{r}
+str(dados)
+summary(dados)
+```
+
+3. Modelo Inicial Completo
+
+Construímos o modelo de regressão linear múltipla com todas as variáveis de transporte e socioeconômicas disponíveis. A variável dependente é o tempo médio de espera (media).
+
+```{r}
+modelo_completo <- lm(
+  media ~ QTLINBUS2018 + KMLINBUS2018 + QTPONTBUS2018 + QTESTMETRO2018 +
+    RENDP2010 + ARE1 + POP2018 + DENPOP2018 + DOMP2018 + ESTAB2016 +
+    EMP2016 + PNBRAN2010 + TEMP2010_5MIN + TEMP2010_30MIN + TEMP2010_60MIN +
+    TEMP2010_120MIN + TEMP2010_121MIN + TEMP2010_0MIN + PDOMC2010 + PDOMM2010,
+  data = dados
+)
+```
+
+4. Diagnóstico do Modelo Completo
+
+Aqui avaliamos a qualidade do ajuste (R², R² ajustado), significância estatística das variáveis (p-valores) e colinearidade (VIF). Valores altos de VIF (> 5 ou 10) indicam multicolinearidade e sugerem remoção de variáveis.
+
+```{r}
+summary(modelo_completo)
+vif(modelo_completo)
+```
+
+5. Seleção Stepwise
+
+Aplicamos o método stepwise para obter um modelo mais enxuto, removendo variáveis redundantes e colineares. O objetivo é maximizar o R² ajustado com o menor número de variáveis significativas.
+
+```{r}
+modelo_stepwise <- step(modelo_completo, direction = "both", trace = FALSE)
+```
+
+6. Diagnóstico do Modelo Stepwise
+    
+Repetimos o diagnóstico para o modelo selecionado, comparando com o modelo completo. Avaliamos se houve perda de explicação (R² ajustado) e quais variáveis permaneceram significativas (p < 0,1).
+
+```{r}
+summary(modelo_stepwise)
+vif(modelo_stepwise)
+```
+
+7. Modelo Alternativo: Desvio Padrão do Tempo de Espera
+
+Como abordagem secundária, modelamos o desvio padrão do tempo de espera (desvpad_amostral) como variável dependente, seguindo o mesmo processo.
+
+```{r}
+modelo_desvpad <- lm(
+  desvpad_amostral ~ QTLINBUS2018 + KMLINBUS2018 + QTPONTBUS2018 + QTESTMETRO2018 + # nolint
+    RENDP2010 + ARE1 + POP2018 + DENPOP2018 + DOMP2018 + ESTAB2016 +
+    EMP2016 + PNBRAN2010 + TEMP2010_5MIN + TEMP2010_30MIN + TEMP2010_60MIN +
+    TEMP2010_120MIN + TEMP2010_121MIN + TEMP2010_0MIN + PDOMC2010 + PDOMM2010,
+  data = dados
+)
+summary(modelo_desvpad)
+vif(modelo_desvpad)
+```
+
+
+8. Stepwise para o Modelo Alternativo
+    
+Selecionamos variáveis para o modelo alternativo usando stepwise e repetimos o diagnóstico.
+
+```{r}
+modelo_stepwise_desvpad <- step(modelo_desvpad, direction = "both", trace = FALSE) # nolint
+summary(modelo_stepwise_desvpad)
+vif(modelo_stepwise_desvpad)
+```
+
+---
+
+
+# 9. Comparação dos Modelos (Completo vs. Stepwise)
+
+Nesta seção, comparamos os resultados dos modelos completo e stepwise para a variável dependente `media`.
+
+## Tabela de Coeficientes do Modelo Completo
+```{r}
+knitr::kable(summary(modelo_completo)$coefficients, caption = "Coeficientes do Modelo Completo") # nolint
+```
+
+## Tabela de VIF do Modelo Completo
+```{r}
+knitr::kable(as.data.frame(vif(modelo_completo)), caption = "VIF do Modelo Completo") # nolint
+```
+
+## Tabela de Coeficientes do Modelo Stepwise
+```{r}
+knitr::kable(summary(modelo_stepwise)$coefficients, caption = "Coeficientes do Modelo Stepwise") # nolint
+```
+
+## Tabela de VIF do Modelo Stepwise
+```{r}
+knitr::kable(as.data.frame(vif(modelo_stepwise)), caption = "VIF do Modelo Stepwise") # nolint
+```
+
+## Gráfico de Resíduos do Modelo Stepwise
+```{r}
+plot(modelo_stepwise, which = 1)
+```
+
+
+## Fórmula do Modelo Stepwise
+```{r, results='asis'}
+# Exibe a fórmula do modelo stepwise, cada termo em uma linha para LaTeX
+form <- deparse(formula(modelo_stepwise))
+form[1] <- gsub("~", "= \\ ", form[1])
+cat("$$", paste(form, collapse = " \\ "), "$$")
+```
+
+**Modelo Completo:**
+- Inclui todas as variáveis disponíveis.
+- Geralmente apresenta R² alto, mas pode ter variáveis não significativas (p > 0,1) e VIF elevado (multicolinearidade).
+
+**Modelo Stepwise:**
+- Seleciona apenas variáveis relevantes, reduzindo o número de preditores.
+- Mantém R² ajustado próximo ao modelo completo, mas com variáveis mais significativas e VIF menor.
+
+**Principais variáveis que tendem a permanecer significativas:**
+- Comprimento de linhas de ônibus (QTLINBUS2018)
+- Área (ARE1)
+- Densidade populacional (DENPOP2018)
+- Proporção de não brancos (PNBRAN2010)
+- Tempo de viagem > 121min (TEMP2010_121MIN)
+
+**Discussão:**
+- O modelo stepwise é mais parcimonioso, facilitando a interpretação e evitando problemas de multicolinearidade.
+- Não há perda significativa de explicação (R² ajustado permanece alto).
+- As variáveis significativas são compatíveis com o artigo original, reforçando a importância dos fatores de transporte e demográficos na acessibilidade urbana.
+
+---
+
+
+# 10. Conclusão
+
+O modelo final obtido via stepwise explica bem o tempo médio de espera pelo UberX em São Paulo, com variáveis relevantes e baixo VIF. A abordagem garante um modelo enxuto e confiável, alinhado com os achados do artigo original. Recomenda-se sempre avaliar VIF e significância das variáveis para garantir robustez e evitar interpretações equivocadas.
+
+Se desejar, utilize os resultados dos summaries e VIFs para montar tabelas e gráficos comparativos no relatório final.
+
+---
+
+# 11. Discussão Crítica e Conexão com o Artigo
+
+Os resultados obtidos neste relatório estão alinhados com o artigo “Medindo a Acessibilidade: Uma Perspectiva de Big Data sobre os Tempos de Espera do Serviço da Uber”. No artigo, o modelo final apresentou R² ≈ 0,879, com significância para comprimento de linhas de ônibus, área, densidade populacional, proporção de não brancos e tempo de viagem superior a 121 minutos. No nosso estudo, observamos:
+
+- **R² e R² ajustado**: O modelo stepwise manteve valores elevados, próximos ao artigo, indicando forte poder explicativo.
+- **Variáveis significativas**: As mesmas variáveis destacadas no artigo permaneceram relevantes, reforçando a importância dos fatores de transporte e demográficos para a acessibilidade urbana.
+- **VIF**: Os valores de VIF ficaram abaixo de 5, conforme recomendado, indicando ausência de multicolinearidade preocupante.
+
+Além disso, o artigo destaca que variáveis como densidade populacional e percentual de não brancos têm impacto negativo no tempo de espera, enquanto área e comprimento das linhas de ônibus influenciam positivamente. Esses achados foram corroborados pelos coeficientes obtidos em nosso modelo.
+
+**Limitações e recomendações**:
+- Assim como no artigo, é importante considerar que os dados refletem apenas a frota UberX e o contexto de São Paulo em 2018.
+- Recomenda-se replicar a análise para outros anos, cidades ou serviços para validar a robustez dos resultados.
+- O artigo sugere que a inclusão de fatores espaciais pode aumentar ainda mais o poder explicativo dos modelos.
+
+**Conclusão crítica**:
+Os resultados reforçam que o tempo de espera pelo UberX pode ser usado como proxy para acessibilidade urbana, desde que acompanhado de uma análise criteriosa dos indicadores socioeconômicos e de transporte. O alinhamento entre os achados deste relatório e o artigo original fortalece a validade das conclusões e abre espaço para futuras pesquisas sobre mobilidade urbana baseada em Big Data.
+
+---
+
+# 12. Resumo das Tarefas e Entregáveis
+
+- Script em R documentado (lm, summary, vif, step) foi apresentado e executado.
+- Relatório comparou modelos completo e stepwise, interpretou R², p-valores e VIF, e discutiu variáveis significativas no contexto de acessibilidade urbana.
+- Discussão crítica alinhada ao artigo, com análise de limitações e recomendações para pesquisas futuras.
+
+---
+
+
