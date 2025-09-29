@@ -22,8 +22,8 @@ library(ggplot2)
 library(textdata)
 
 # Carregar o texto
-setwd("C:/Users/ediad/OneDrive/Documentos/GitHub/Predictive-Analysis/tom-sentiment-lab") # nolint
-tom_raw <- readLines("C:/Users/ediad/OneDrive/Documentos/GitHub/Predictive-Analysis/tom-sentiment-lab/tom_sawyer.txt", encoding = "UTF-8") # nolint
+setwd("C:/Users/gustavo.telles/Documents/GitHub/Predictive-Analysis/tom-sentiment-lab") # nolint
+tom_raw <- readLines("C:/Users/gustavo.telles/Documents/GitHub/Predictive-Analysis/tom-sentiment-lab/tom_sawyer.txt", encoding = "UTF-8") # nolint
 tom_tbl <- tibble(
   text = tom_raw, # nolint
   linenumber = seq_along(tom_raw)
